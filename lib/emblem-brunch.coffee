@@ -21,7 +21,7 @@ module.exports = class EmblemCompiler
     vm.runInContext fs.readFileSync(paths.emblem, 'utf8'), @window
     if paths.ember
       # @window.run fs.readFileSync paths.ember, 'utf8'
-      @window.run fs.readFileSync(paths.ember, 'utf8'), @window
+      vm.runInContext fs.readFileSync(paths.ember, 'utf8'), @window
       @ember = true
     else
       @ember = false
