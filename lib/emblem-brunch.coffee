@@ -1,6 +1,7 @@
 sysPath = require 'path'
 fs = require 'fs'
-jsdom = require 'jsdom'
+jsdom = require 'jsdom-nogyp'
+vm = require 'vm'
 
 module.exports = class EmblemCompiler
   brunchPlugin: yes
@@ -9,14 +10,18 @@ module.exports = class EmblemCompiler
   pattern: /\.(?:emblem)$/
 
   setup: (@config) ->
-    @window = jsdom.jsdom().createWindow()
+    @window = vm.createContext(jsdom.jsdom().createWindow())
     paths = @config.files.templates.paths
     if paths.jquery
-      @window.run fs.readFileSync paths.jquery, 'utf8'
-    @window.run fs.readFileSync paths.handlebars, 'utf8'
-    @window.run fs.readFileSync paths.emblem, 'utf8'
+      # @window.run fs.readFileSync paths.jquery, 'utf8'
+      vm.runInContext fs.readFileSync(paths.jquery, 'utf8'), @window
+    # @window.run fs.readFileSync paths.handlebars, 'utf8'
+    vm.runInContext fs.readFileSync(paths.handlebars, 'utf8'), @window
+    # @window.run fs.readFileSync paths.emblem, 'utf8'
+    vm.runInContext fs.readFileSync(paths.emblem, 'utf8'), @window
     if paths.ember
-      @window.run fs.readFileSync paths.ember, 'utf8'
+      # @window.run fs.readFileSync paths.ember, 'utf8'
+      @window.run fs.readFileSync(paths.ember, 'utf8'), @window
       @ember = true
     else
       @ember = false
