@@ -35,6 +35,9 @@ module.exports = class EmblemCompiler
     if not @window?
       return callback "files.templates.paths must be set in your config", {}
     try
+      # use nameCleaner to preprocess path
+      if @config?.modules?.nameCleaner
+        path = @config.modules.nameCleaner(path)
       if @ember
         path = path
           .replace(new RegExp('\\\\', 'g'), '/')
