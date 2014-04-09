@@ -44,7 +44,7 @@ module.exports = class EmblemCompiler
           .replace(/^app\//, '')
           .replace(/^templates\//, '')
           .replace(/\/templates\//, '/')
-          .replace(/\.\w+$/, '')
+          .replace(/\.[\.\w]+$/, '')
         content = @window.Emblem.precompile @window.Ember.Handlebars, data
         result = "Ember.TEMPLATES[#{JSON.stringify(path)}] = Ember.Handlebars.template(#{content});module.exports = module.id;"
       else
