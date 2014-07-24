@@ -41,10 +41,10 @@ module.exports = class EmblemCompiler
       if @ember
         mapper = @config?.plugins?.emblem?.templateNameMapper
         if mapper?
-          path = mapper(path)
+          path = mapper path
         content = @window.Emblem.precompile @window.Ember.Handlebars, data
         path2 = JSON.stringify(path)
-        result = "Ember.TEMPLATES[#{path2}] = Ember.Handlebars.template(#{content});module.exports = \'#{path2}\';"
+        result = "Ember.TEMPLATES[#{path2}] = Ember.Handlebars.template(#{content});module.exports = #{path2};"
       else
         content = @window.Emblem.precompile @window.Handlebars, data
         result = "module.exports = Handlebars.template(#{content});"
