@@ -39,14 +39,12 @@ module.exports = class EmblemCompiler
       if @config?.modules?.nameCleaner
         path = @config.modules.nameCleaner(path)
       if @ember
-        path = path
-          .replace(new RegExp('\\\\', 'g'), '/')
-          .replace(/^app\//, '')
-          .replace(/^templates\//, '')
-          .replace(/\/templates\//, '/')
-          .replace(/\.\w+$/, '')
+        mapper = @config?.plugins?.emblem?.templateNameMapper
+        if mapper?
+          path = mapper(path)
         content = @window.Emblem.precompile @window.Ember.Handlebars, data
-        result = "Ember.TEMPLATES[#{JSON.stringify(path)}] = Ember.Handlebars.template(#{content});module.exports = module.id;"
+        path2 = JSON.stringify(path)
+        result = "Ember.TEMPLATES[#{path2}] = Ember.Handlebars.template(#{content});module.exports = \'#{path2}\';"
       else
         content = @window.Emblem.precompile @window.Handlebars, data
         result = "module.exports = Handlebars.template(#{content});"
