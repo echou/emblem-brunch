@@ -11,6 +11,7 @@ module.exports = class EmblemCompiler
 
   setup: (@config) ->
     @window = vm.createContext(jsdom.jsdom().createWindow())
+    @window['navigator'] = {userAgent: 'NodeJS Jsdom'}
     paths = @config.files.templates.paths
     if paths.jquery
       # @window.run fs.readFileSync paths.jquery, 'utf8'
