@@ -15,14 +15,14 @@ module.exports = class EmblemCompiler
     paths = @config.files.templates.paths
     if paths.jquery
       # @window.run fs.readFileSync paths.jquery, 'utf8'
-      vm.runInContext fs.readFileSync(paths.jquery, 'utf8'), @window
+      vm.runInContext fs.readFileSync(paths.jquery, 'utf8'), @window, paths.jquery
     # @window.run fs.readFileSync paths.handlebars, 'utf8'
-    vm.runInContext fs.readFileSync(paths.handlebars, 'utf8'), @window
+    vm.runInContext fs.readFileSync(paths.handlebars, 'utf8'), @window, paths.handlebars
     # @window.run fs.readFileSync paths.emblem, 'utf8'
-    vm.runInContext fs.readFileSync(paths.emblem, 'utf8'), @window
+    vm.runInContext fs.readFileSync(paths.emblem, 'utf8'), @window, paths.emblem
     if paths.ember
       # @window.run fs.readFileSync paths.ember, 'utf8'
-      vm.runInContext fs.readFileSync(paths.ember, 'utf8'), @window
+      vm.runInContext fs.readFileSync(paths.ember, 'utf8'), @window, paths.ember
       @ember = true
     else
       @ember = false
