@@ -41,7 +41,7 @@ module.exports = class EmblemCompiler
         if mapper?
           path = mapper path
         if @window.Ember.HTMLBars?
-          if not Ember.Handlebars.AST?
+          if not @window.Ember.Handlebars.AST?
             ast = @window.Ember.__loader.require("htmlbars-syntax/handlebars/compiler/ast");
             @window.Ember.Handlebars.AST = ast['default']
           content = @window.Emblem.precompile @window.Ember.Handlebars, data
