@@ -39,18 +39,18 @@ module.exports = class EmblemCompiler
       if @ember
         mapper = @config?.plugins?.emblem?.templateNameMapper
         if mapper?
-          path = mapper path
+          path = mapper(path)
         if @window.Ember.HTMLBars?
-          if not @window.Ember.Handlebars.AST?
+          if not @window.Ember.HTMLBars.AST?
             ast = @window.Ember.__loader.require("htmlbars-syntax/handlebars/compiler/ast");
-            @window.Ember.Handlebars.AST = ast['default']
-          content = @window.Emblem.precompile @window.Ember.Handlebars, data
-          result = "module.exports = Ember.Handlebars.template(#{content});"
+            @window.Ember.HTMLBars.AST = ast['default']
+          content = @window.Emblem.precompile @window.Ember.HTMLBars, data
+          result = "module.exports = Ember.HTMLBars.template(#{content});"
         else
           content = @window.Emblem.precompile @window.Ember.Handlebars, data
           path2 = JSON.stringify(path)
           result = "Ember.TEMPLATES[#{path2}] = Ember.Handlebars.template(#{content});module.exports = #{path2};"
-      else
+      else if @window.Handlebars
         content = @window.Emblem.precompile @window.Handlebars, data
         result = "module.exports = Handlebars.template(#{content});"
     catch err
