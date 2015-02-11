@@ -23,6 +23,8 @@ module.exports = class EmblemCompiler
       @ember = true
     else
       @ember = false
+    if @ember and paths.ember_template_compiler
+      vm.runInContext fs.readFileSync(paths.ember_template_compiler, 'utf8'), @window, paths.ember_template_compiler
 
   constructor: (@config) ->
     if @config.files.templates?.paths?
