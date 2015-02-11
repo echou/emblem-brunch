@@ -27,10 +27,16 @@ exports.config =
       paths:
         # If you don't specify jquery and ember there,
         # raw (non-Emberized) Handlebars templates will be compiled.
-        jquery: 'vendor/scripts/jquery-1.9.0.min.js'
-        ember: 'vendor/scripts/ember-latest.js'
-        handlebars: 'handlebars.js'
+        jquery: 'bower_components/jquery/jquery.js'
+        ember: 'bower_components/ember/ember-debug.js'
         emblem: 'emblem.js'
+        
+        # for ember version below 1.10.0
+        handlebars: 'bower_components/handlebars/handlebars.js'
+        
+        # for ember version 1.10.0+
+        ember_template_compiler: 'bower_components/ember/ember-template-compiler.js'
+        
 ```
 
 ### With Ember
