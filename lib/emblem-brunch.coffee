@@ -25,6 +25,11 @@ module.exports = class EmblemCompiler
       @ember = false
     if @ember and paths.ember_template_compiler
       vm.runInContext fs.readFileSync(paths.ember_template_compiler, 'utf8'), @window, paths.ember_template_compiler
+    es6wrapper = @config.plugins?.es6ModuleTranspiler?.wrapper || 'amd'
+    @wrapper = false
+    if not @config.modules?.wrapper and es6wrapper is 'amd'
+      @wrapper = 'amd'
+
 
   constructor: (@config) ->
     if @config.files.templates?.paths?
@@ -47,7 +52,15 @@ module.exports = class EmblemCompiler
             ast = @window.Ember.__loader.require("htmlbars-syntax/handlebars/compiler/ast");
             @window.Ember.HTMLBars.AST = ast['default']
           content = @window.Emblem.precompile @window.Ember.HTMLBars, data
-          result = "module.exports = Ember.HTMLBars.template(#{content});"
+          if not @wrapper
+            result = "module.exports = Ember.HTMLBars.template(#{content});"
+          else if @wrapper is 'amd'
+            result = """
+  define("#{path}", ["exports"], function(__exports__) {
+  "use strict";
+  __exports__["default"] = Ember.HTMLBars.template(#{content});
+});
+"""
         else
           content = @window.Emblem.precompile @window.Ember.Handlebars, data
           path2 = JSON.stringify(path)
