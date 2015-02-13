@@ -1,35 +1,57 @@
 sysPath = require 'path'
-fs = require 'fs'
-jsdom = require 'jsdom-nogyp'
-vm = require 'vm'
+fs      = require 'fs'
+jsdom   = require 'jsdom-nogyp'
+vm      = require 'vm'
 
 module.exports = class EmblemCompiler
   brunchPlugin: yes
-  type: 'template'
-  extension: 'emblem'
-  pattern: /\.(?:emblem)$/
+  type:         'template'
+  extension:    'emblem'
+  pattern:      /\.(emblem|hbs|handlebars)$/
+  nameCleaner:  (path)->path
+
+  templateFunc:  "Ember.Handlebars.template"
+  customWrapper: false
+
+  htmlbars: null
+
+  runScript: (ctx, file)->
+    vm.runInContext fs.readFileSync(file, 'utf8'), ctx, file
 
   setup: (@config) ->
     @window = vm.createContext(jsdom.jsdom().createWindow())
     @window['navigator'] = {userAgent: 'NodeJS Jsdom'}
     paths = @config.files.templates.paths
-    if paths.jquery
-      vm.runInContext fs.readFileSync(paths.jquery, 'utf8'), @window, paths.jquery
-    if paths.handlebars
-      vm.runInContext fs.readFileSync(paths.handlebars, 'utf8'), @window, paths.handlebars
-    vm.runInContext fs.readFileSync(paths.emblem, 'utf8'), @window, paths.emblem
-    if paths.ember
-      vm.runInContext fs.readFileSync(paths.ember, 'utf8'), @window, paths.ember
-      @ember = true
-    else
-      @ember = false
-    if @ember and paths.ember_template_compiler
-      vm.runInContext fs.readFileSync(paths.ember_template_compiler, 'utf8'), @window, paths.ember_template_compiler
-    es6wrapper = @config.plugins?.es6ModuleTranspiler?.wrapper || 'amd'
-    @wrapper = false
-    if not @config.modules?.wrapper and es6wrapper is 'amd'
-      @wrapper = 'amd'
 
+    @runScript @window, paths.jquery
+    @runScript @window, paths.ember
+
+    if paths.ember_template_compiler
+      @runScript @window, paths.ember_template_compiler
+      @window.Ember.__loader.require("ember-template-compiler")
+
+    if paths.emblem
+      @runScript @window, paths.emblem
+      @pattern = /\.(emblem|hbs|handlebars)$/
+    else
+      @pattern = /\.(hbs|handlebars)$/
+
+    es6wrapper = @config.plugins?.es6ModuleTranspiler?.wrapper || 'amd'
+    @customWrapper = false
+    if not @config.modules?.wrapper and es6wrapper is 'amd'
+      @customWrapper = 'amd'
+
+    if @window.Ember.HTMLBars
+      @templateFunc = "Ember.HTMLBars.template"
+      if not @window.Ember.HTMLBars.AST
+        ast = @window.Ember.__loader.require("htmlbars-syntax/handlebars/compiler/ast");
+        @window.Ember.HTMLBars.AST = ast['default']
+      @htmlbars = @window.Ember.HTMLBars
+    else
+      @templateFunc = "Ember.Handlebars.template"
+      @htmlbars = @window.Ember.Handlebars
+
+    @nameCleaner = @config.modules?.nameCleaner || @config.plugins?.es6ModuleTranspiler?.moduleName || ((path)->path)
 
   constructor: (@config) ->
     if @config.files.templates?.paths?
@@ -39,36 +61,39 @@ module.exports = class EmblemCompiler
   compile: (data, path, callback) ->
     if not @window?
       return callback "files.templates.paths must be set in your config", {}
+
+    ext  = sysPath.extname(path)
+    name = sysPath.join(sysPath.dirname(path), sysPath.basename(path, ext)).replace(/[\\]/g, '/')
+    name = @nameCleaner(name)
     try
       # use nameCleaner to preprocess path
-      if @config?.modules?.nameCleaner
-        path = @config.modules.nameCleaner(path)
-      if @ember
-        mapper = @config?.plugins?.emblem?.templateNameMapper
-        if mapper?
-          path = mapper(path)
-        if @window.Ember.HTMLBars?
-          if not @window.Ember.HTMLBars.AST?
-            ast = @window.Ember.__loader.require("htmlbars-syntax/handlebars/compiler/ast");
-            @window.Ember.HTMLBars.AST = ast['default']
-          content = @window.Emblem.precompile @window.Ember.HTMLBars, data
-          if not @wrapper
-            result = "module.exports = Ember.HTMLBars.template(#{content});"
-          else if @wrapper is 'amd'
-            result = """
-  define("#{path}", ["exports"], function(__exports__) {
+
+      templateName = @config?.plugins?.emblem?.templateNameMapper?(name) || name
+
+      if ext is '.emblem'
+        content = @window.Emblem.precompile @htmlbars, data
+      else
+        content = @htmlbars.precompile data
+
+      if @customWrapper is 'amd'
+        result = """
+
+define("#{name}", ["exports"], function(__exports__) {
   "use strict";
-  __exports__["default"] = Ember.HTMLBars.template(#{content});
+  __exports__["default"] = #{@templateFunc}(#{content});
 });
+
 """
-        else
-          content = @window.Emblem.precompile @window.Ember.Handlebars, data
-          path2 = JSON.stringify(path)
-          result = "Ember.TEMPLATES[#{path2}] = Ember.Handlebars.template(#{content});module.exports = #{path2};"
-      else if @window.Handlebars
-        content = @window.Emblem.precompile @window.Handlebars, data
-        result = "module.exports = Handlebars.template(#{content});"
+      else
+        result = """
+
+Ember.TEMPLATES["#{templateName}"] = #{@templateFunc}(#{content});
+if (module && module.exports) {
+  module.exports = "#{templateName}";
+}
+
+"""
     catch err
-      error = err
+      error = err + " (#{path}"
     finally
       callback error, result
