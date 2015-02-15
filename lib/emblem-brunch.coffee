@@ -85,14 +85,23 @@ define("#{name}", ["exports"], function(__exports__) {
 
 """
       else
-        result = """
+        if @window.Ember.HTMLBars
+          result = """
 
-Ember.TEMPLATES["#{templateName}"] = #{@templateFunc}(#{content});
+var temp = #{@templateFunc}(#{content});
 if (module && module.exports) {
-  module.exports = "#{templateName}";
+  module.exports = temp;
 }
 
 """
+        else
+          result = """
+Ember.TEMPLATES["#{templateName}"] = #{@templateFunc}(#{content});
+if (module && module.exports) {
+  module.exports = "#{templateName}"
+}
+"""
+
     catch err
       error = err + " (#{path}"
     finally
