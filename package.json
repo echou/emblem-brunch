@@ -18,7 +18,7 @@
   "dependencies": {
     "coffee-script": ">=1.8.0",
     "jsdom-nogyp": "0.8",
-    "emblem": ">= 0.5.0"
+    "emblem": "git+https://github.com/machty/emblem.js.git"
   },
   "devDependencies": {
   }
